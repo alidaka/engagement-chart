@@ -1,14 +1,16 @@
-module Main exposing (Msg(..), init, main, update, view, viewForField)
+module Main exposing (Msg(..), chart, fields, init, main, update, view)
 
 import Browser
-import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
+import Css exposing (column, displayFlex, flexDirection, margin, px, row)
+import Html.Styled exposing (Html, button, div, text, toUnstyled)
+import Html.Styled.Attributes exposing (css)
+import Html.Styled.Events exposing (onClick)
 import LineChart
 import Models exposing (Field, Model)
 
 
 main =
-    Browser.sandbox { init = init, update = update, view = view }
+    Browser.sandbox { init = init, update = update, view = view >> toUnstyled }
 
 
 type Msg
@@ -41,16 +43,25 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        (List.map
-            (viewForField model)
-            Models.fields
-        )
+    div [ css [ displayFlex, flexDirection column ] ]
+        [ fields model, chart model ]
 
 
-viewForField model field =
-    div []
-        [ button [ onClick <| Decrement field ] [ text "-" ]
-        , div [] [ text <| field.name ++ ": " ++ String.fromInt (field.getter model) ]
-        , button [ onClick <| Increment field ] [ text "+" ]
-        ]
+fields model =
+    let
+        viewForField field =
+            let
+                fieldName =
+                    field.name ++ ": " ++ String.fromFloat (field.getter model)
+            in
+            div [ css [ margin (px 32) ] ]
+                [ button [ onClick <| Decrement field ] [ text "-" ]
+                , div [] [ text <| fieldName ]
+                , button [ onClick <| Increment field ] [ text "+" ]
+                ]
+    in
+    div [ css [ displayFlex, flexDirection row ] ] (List.map viewForField Models.fields)
+
+
+chart model =
+    div [] []

@@ -2,17 +2,17 @@ module Models exposing (Field, Model, fields)
 
 
 type alias Model =
-    { workload : Int
-    , control : Int
-    , reward : Int
-    , community : Int
-    , fairness : Int
-    , values : Int
+    { workload : Float
+    , control : Float
+    , reward : Float
+    , community : Float
+    , fairness : Float
+    , values : Float
     }
 
 
 type alias Field =
-    { name : String, getter : Model -> Int, setter : Model -> Int -> Model }
+    { name : String, getter : Model -> Float, setter : Model -> Float -> Model }
 
 
 fields : List Field
