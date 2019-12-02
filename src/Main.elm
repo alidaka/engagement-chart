@@ -1,12 +1,12 @@
-module Main exposing (Msg(..), chart, fields, init, main, update, view)
+module Main exposing (Msg(..), areas, calculateValues, chart, init, kernel, main, series, transformTypes, update, view)
 
 import Browser
 import Css exposing (column, displayFlex, flexDirection, margin, px, row)
-import Html.Styled exposing (Html, button, div, text, toUnstyled)
+import Html.Styled exposing (Html, button, div, fromUnstyled, text, toUnstyled)
 import Html.Styled.Attributes exposing (css)
 import Html.Styled.Events exposing (onClick)
 import LineChart
-import Models exposing (Field, Model)
+import Models exposing (Area, AreaParameters, Model)
 
 
 main =
@@ -14,54 +14,98 @@ main =
 
 
 type Msg
-    = Increment Field
-    | Decrement Field
+    = Increment Area
+    | Decrement Area
 
 
 init : Model
 init =
-    { workload = 0
-    , control = 0
-    , reward = 0
-    , community = 0
-    , fairness = 0
-    , values = 0
+    { parameters =
+        { workload = 50
+        , control = 50
+        , reward = 50
+        , community = 50
+        , fairness = 50
+        , values = 50
+        }
+    , updatedArea = Models.values
     }
 
 
-update : Msg -> Model -> Model
-update msg model =
-    case msg of
-        Increment field ->
-            field.setter model
-                (field.getter model + 1)
 
-        Decrement field ->
-            field.setter model
-                (field.getter model - 1)
+--- TODO: update last updated area
+
+
+update : Msg -> Model -> Model
+update msg { parameters } =
+    case msg of
+        Increment area ->
+            { parameters = area.setter parameters (area.getter parameters + 1)
+            , updatedArea = area
+            }
+
+        Decrement area ->
+            { parameters = area.setter parameters (area.getter parameters - 1)
+            , updatedArea = area
+            }
 
 
 view : Model -> Html Msg
 view model =
     div [ css [ displayFlex, flexDirection column ] ]
-        [ fields model, chart model ]
+        [ areas model.parameters, chart model ]
 
 
-fields model =
+areas model =
     let
-        viewForField field =
+        viewForField area =
             let
                 fieldName =
-                    field.name ++ ": " ++ String.fromFloat (field.getter model)
+                    area.name ++ ": " ++ String.fromFloat (area.getter model)
             in
             div [ css [ margin (px 32) ] ]
-                [ button [ onClick <| Decrement field ] [ text "-" ]
+                [ button [ onClick <| Decrement area ] [ text "-" ]
                 , div [] [ text <| fieldName ]
-                , button [ onClick <| Increment field ] [ text "+" ]
+                , button [ onClick <| Increment area ] [ text "+" ]
                 ]
     in
-    div [ css [ displayFlex, flexDirection row ] ] (List.map viewForField Models.fields)
+    div [ css [ displayFlex, flexDirection row ] ] (List.map viewForField Models.areas)
+
+
+
+--- TODO: see LineChart.viewCustom, pick correct interpolation mode
 
 
 chart model =
-    div [] []
+    div [] [ fromUnstyled <| LineChart.view1 Tuple.first Tuple.second (series model) ]
+
+
+series : Model -> List ( Float, Float )
+series model =
+    List.repeat 100 model.parameters
+        |> List.indexedMap (\x -> calculateValues model.updatedArea x)
+        |> List.map transformTypes
+
+
+calculateValues : Area -> Int -> AreaParameters -> ( Float, AreaParameters )
+calculateValues area index parameters =
+    let
+        idx =
+            toFloat index
+    in
+    Tuple.pair idx (area.setter parameters idx)
+
+
+transformTypes : ( Float, AreaParameters ) -> ( Float, Float )
+transformTypes ( index, parameters ) =
+    let
+        value =
+            List.map (\area -> area.getter parameters) Models.areas
+                |> List.map kernel
+                |> List.product
+    in
+    Tuple.pair index value
+
+
+kernel value =
+    max 0.01 value ^ 2
