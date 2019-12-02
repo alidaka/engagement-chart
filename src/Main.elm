@@ -2,9 +2,10 @@ module Main exposing (Msg(..), areas, calculateValues, chart, init, kernel, main
 
 import Browser
 import Css exposing (column, displayFlex, flexDirection, margin, px, row)
-import Html.Styled exposing (Html, button, div, fromUnstyled, text, toUnstyled)
-import Html.Styled.Attributes exposing (css)
-import Html.Styled.Events exposing (onClick)
+import Debug
+import Html.Styled exposing (Html, button, div, fromUnstyled, input, text, toUnstyled)
+import Html.Styled.Attributes exposing (css, type_)
+import Html.Styled.Events exposing (onInput)
 import LineChart
 import Models exposing (Area, AreaParameters, Model)
 
@@ -14,8 +15,7 @@ main =
 
 
 type Msg
-    = Increment Area
-    | Decrement Area
+    = Set Area String
 
 
 init : Model
@@ -35,13 +35,17 @@ init =
 update : Msg -> Model -> Model
 update msg { parameters } =
     case msg of
-        Increment area ->
-            { parameters = area.setter parameters (area.getter parameters + 1)
-            , updatedArea = area
-            }
+        Set area value ->
+            let
+                val =
+                    case String.toFloat (Debug.log value value) of
+                        Just f ->
+                            f
 
-        Decrement area ->
-            { parameters = area.setter parameters (area.getter parameters - 1)
+                        Nothing ->
+                            area.getter parameters
+            in
+            { parameters = area.setter parameters val
             , updatedArea = area
             }
 
@@ -60,9 +64,12 @@ areas model =
                     area.name ++ ": " ++ String.fromFloat (area.getter model)
             in
             div [ css [ margin (px 32) ] ]
-                [ button [ onClick <| Decrement area ] [ text "-" ]
-                , div [] [ text <| fieldName ]
-                , button [ onClick <| Increment area ] [ text "+" ]
+                [ div [] [ text fieldName ]
+
+                -- note: worrying comment on #onInput for type=range:
+                -- https://github.com/rtfeldman/elm-css/blob/master/src/Html/Styled/Events.elm
+                -- TODO: also move the String->Float logic out of update, into here
+                , input [ type_ "range", onInput <| Set area ] [ text "+" ]
                 ]
     in
     div [ css [ displayFlex, flexDirection row ] ] (List.map viewForField Models.areas)
