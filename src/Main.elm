@@ -32,10 +32,6 @@ init =
     }
 
 
-
---- TODO: update last updated area
-
-
 update : Msg -> Model -> Model
 update msg { parameters } =
     case msg of
@@ -108,4 +104,6 @@ transformTypes ( index, parameters ) =
 
 
 kernel value =
-    max 0.01 value ^ 2
+    (/) value 500
+        |> max 0.01
+        |> (^) 2
