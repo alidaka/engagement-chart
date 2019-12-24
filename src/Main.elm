@@ -38,7 +38,7 @@ update msg { parameters } =
         Set area value ->
             let
                 val =
-                    case String.toFloat (Debug.log value value) of
+                    case String.toFloat (Debug.log area.name value) of
                         Just f ->
                             f
 
