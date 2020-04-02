@@ -13,3 +13,7 @@ p399
 
 ## Development thoughts
 Currently using line-charts, consider elm-chartjs?
+
+## TO DO
+Product roadmap
+AARRR
